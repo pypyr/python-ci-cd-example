@@ -1,0 +1,66 @@
+context_parser: pypyr.parser.keys
+steps:
+  - name: pypyr.steps.default
+    comment: set parameters & vars used throughout pipeline.
+    in:
+      defaults:
+        package_name: arbpackage
+        test_dir: tests
+        output_results_dir: .test-results
+        output_coverage: xml:{output_results_dir}/codecoverage/coverage.xml
+        output_test_results: "{output_results_dir}/testresults/junitresults.xml"
+        file-report: false
+        package: false
+        publish: false
+  - name: pypyr.steps.call
+    comment: verify & test code
+    in:
+      call: 
+        - verify
+        - test
+  - name: pypyr.steps.call
+    comment: build & check package
+    run: '{package}'
+    in:
+      call: build
+
+verify:
+  - name: pypyr.steps.cmd
+    comment: verify setup.py
+             this will soon (?) deprecate in favor of twine --check. 
+             For the moment twine still only checks README validity, and not 
+             metadata.
+    description: --> verify setup.py metadata
+    in:
+      cmd: python setup.py check -m -s
+  - name: pypyr.steps.cmd
+    comment: lint with flake8
+    description: --> flake8 linting
+    in:
+      cmd: flake8
+
+test:
+  - name: pypyr.steps.cmd
+    comment: test & coverage
+    description: --> tests, output to terminal with line nos.
+    skip: '{file-report}'
+    in:
+      cmd: pytest --cov={package_name} --cov-report term-missing {test_dir}
+  - name: pypyr.steps.cmd
+    comment: test & coverage but with file output
+    description: --> tests, output to file
+    run: '{file-report}'
+    in:
+      cmd: pytest --cov={package_name} --cov-report term-missing --cov-report {output_coverage} --junitxml={output_test_results} {test_dir}
+
+build:
+  - name: pypyr.steps.cmd
+    comment: build wheel + sdist 
+    description: --> build wheel + sdist to dist/
+    in:
+      cmd: python setup.py bdist_wheel sdist
+  - name: pypyr.steps.cmd
+    comment: verify README/long_description
+    description: --> verify long description README in dist/
+    in:
+      cmd: twine check dist/*
