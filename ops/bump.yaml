@@ -11,7 +11,8 @@ steps:
       pype:
          name: ops/build
          args:
-          package: True
+          argList:
+            - package
   - name: pypyr.steps.pype
     description: --> getting current version
     in:

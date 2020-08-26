@@ -1,14 +1,10 @@
-tag:
-  - name: pypyr.steps.default
-    comment: set parameters & vars used throughout pipeline.
+steps:
+  - name: pypyr.steps.pype
+    description: --> getting current version
     in:
-      defaults:
-        package_name: arbpackage
-        version_module_name: '{package_name}.version'
-        push: false
-  - name: pypyr.steps.call
-    in:
-      call: get_version
+      pype:
+          name: ops/build
+          groups: get_version
   - name: pypyr.steps.cmd
     description: --> make sure local branch has latest tags from origin
     in:
@@ -53,15 +49,3 @@ set_git_config:
     description: --> setting git user.email
     in:
       cmd: git config user.email github-actions@github.com
-
-get_version:
-  - name: pypyr.steps.py
-    description: --> get version
-    in:
-      pycode: |
-        import importlib
-        version_module = importlib.import_module(version_module_name)
-        context['version'] = f'v{version_module.__version__}'
-  - name: pypyr.steps.echo
-    in:
-      echoMe: version is {version}
