@@ -12,7 +12,23 @@ steps:
          name: ops/build
          args:
           package: True
+  - name: pypyr.steps.pype
+    description: --> getting current version
+    in:
+      pype:
+          name: ops/build
+          groups: get_version
   - name: pypyr.steps.cmd
     description: --> bumping version
     in:
-      cmd: bumpversion {argString}
+      cmd: bumpversion --no-tag  --commit {argString}
+  - name: pypyr.steps.cmd
+    description: --> push bump
+    in:
+      cmd: git push
+  - name: pypyr.steps.pype
+    description: --> getting new version
+    in:
+      pype:
+          name: ops/build
+          groups: get_version

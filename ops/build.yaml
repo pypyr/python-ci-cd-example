@@ -1,30 +1,46 @@
-context_parser: pypyr.parser.keys
+context_parser: pypyr.parser.list
 steps:
   - name: pypyr.steps.default
     comment: set parameters & vars used throughout pipeline.
     in:
       defaults:
         package_name: arbpackage
+        version_module_name: '{package_name}.version'
         test_dir: tests
         output_results_dir: .test-results
         output_coverage: xml:{output_results_dir}/codecoverage/coverage.xml
         output_test_results: "{output_results_dir}/testresults/junitresults.xml"
-        file-report: false
         package: false
         publish: false
+  - name: pypyr.steps.envget
+    comment: CI is true in a github action environment.
+    in:
+      envGet:
+        env: CI
+        key: isCi
+        default: False
   - name: pypyr.steps.call
-    comment: verify & test code
+    comment: lint & test code
     in:
       call: 
-        - verify
+        - lint
         - test
   - name: pypyr.steps.call
-    comment: build & check package
-    run: '{package}'
+    run: '{argList}'
     in:
-      call: build
+      call: '{argList}'
+  # - name: pypyr.steps.call
+  #   comment: build & check package
+  #   run: '{package}'
+  #   in:
+  #     call: package
+  # - name: pypyr.steps.call
+  #   comment: publish package
+  #   run: '{publish}'
+  #   in:
+  #     call: publish
 
-verify:
+lint:
   - name: pypyr.steps.cmd
     comment: verify setup.py
              this will soon (?) deprecate in favor of twine --check. 
@@ -43,17 +59,17 @@ test:
   - name: pypyr.steps.cmd
     comment: test & coverage
     description: --> tests, output to terminal with line nos.
-    skip: '{file-report}'
+    skip: '{isCi}'
     in:
       cmd: pytest --cov={package_name} --cov-report term-missing {test_dir}
   - name: pypyr.steps.cmd
     comment: test & coverage but with file output
     description: --> tests, output to file
-    run: '{file-report}'
+    run: '{isCi}'
     in:
       cmd: pytest --cov={package_name} --cov-report term-missing --cov-report {output_coverage} --junitxml={output_test_results} {test_dir}
 
-build:
+package:
   - name: pypyr.steps.cmd
     comment: build wheel + sdist 
     description: --> build wheel + sdist to dist/
@@ -61,6 +77,56 @@ build:
       cmd: python setup.py bdist_wheel sdist
   - name: pypyr.steps.cmd
     comment: verify README/long_description
-    description: --> verify long description README in dist/
+    description: --> verify/check new package in dist/
     in:
       cmd: twine check dist/*
+
+get_version:
+  - name: pypyr.steps.py
+    description: --> get version
+    in:
+      pycode: |
+        import importlib
+        version_module = importlib.import_module(context['version_module_name'])
+        context['version'] = f'v{version_module.__version__}'
+  - name: pypyr.steps.echo
+    in:
+      echoMe: version is {version}
+
+publish:
+  - name: pypyr.steps.call
+    in:
+      call: get_version
+  - name: pypyr.steps.cmd
+    description: --> publishing package to pypi
+    in:
+      cmd: echo twine upload dist/{package_name}-{version}*
+  - name: pypyr.steps.cmd
+    description: --> uninstall current version of package before attempting to reinstall from pypi
+    in:
+      cmd: echo pip uninstall {package_name}
+  - name: pypyr.steps.contextcopy
+    in:
+      contextCopy:
+        expected_version: version
+  - name: pypyr.steps.cmd
+    description: --> giving pypi 10s before testing release
+    in:
+      cmd: sleep 10
+  - name: pypyr.steps.cmd
+    description: --> installing just published release from pypi for smoke-test
+    retry:
+      max: 5
+      sleep: 10
+    in:
+      cmd: echo pip install --upgrade --no-cache-dir {package_name}=={expected_version}
+  - name: pypyr.steps.call
+    in:
+      call: get_version
+  - name: pypyr.steps.assert
+    description: --> checking published package version as expected
+    in:
+      assert:
+        this: '{version}'
+        equals: '{expected_version}'
+
