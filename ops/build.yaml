@@ -110,9 +110,11 @@ get_version:
     in:
       pycode: |
         import importlib
-        importlib.invalidate_caches()
         version_module = importlib.import_module(context['version_module_name'])
+        if context.get('is_version_module_loaded'): 
+          importlib.reload(version_module)
         context['version'] = f'v{version_module.__version__}'
+        context['is_version_module_loaded'] = True
   - name: pypyr.steps.echo
     in:
       echoMe: version is {version}
