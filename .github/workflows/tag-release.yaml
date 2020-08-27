@@ -25,4 +25,4 @@ jobs:
       - name: run tag pipeline.
         uses: pypyr/run-in-tox-action@master
         with:
-          pipeline: tox ops/tag
+          pipeline: ops/tag
