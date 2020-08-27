@@ -3,7 +3,7 @@ name: lint-test-build
 on:
   push:
     branches:
-      - '**'
+      - master
     tags-ignore:
       - '**'
   pull_request:
@@ -21,15 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - name: Run build pipeline for linting, testing & packaging verification.
+        uses: pypyr/run-in-tox-action@master
         with:
+          pipeline: ops/build package
           python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install tox
-      - name: Run build pipeline for linting, tests & packaging integrity checks.
-        run: tox ops/build package
