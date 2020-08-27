@@ -44,7 +44,13 @@ test:
     run: '{isCi}'
     in:
       cmd: pytest --cov={package_name} --cov-report term-missing --cov-report {output_coverage} --junitxml={output_test_results} {test_dir}
-
+  - name: pypyr.steps.cmd
+    comment: coverage upload only works like this on CI. if you want to run local you need to give -t upload-token switch.
+    description: --> upload coverage report output to codecov if CI.
+    run: '{isCi}'
+    in:
+      cmd: codecov
+  
 package:
   - name: pypyr.steps.cmd
     comment: build wheel + sdist 
