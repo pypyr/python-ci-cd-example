@@ -93,9 +93,18 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['check-manifest', 'flake8'],
-        'test': ['pytest', 'pytest-cov', 'tox'],
-        'deploy': ['bumpversion', 'twine']
+        'dev': [
+            'bumpversion',
+            'codecov',
+            'flake8',
+            'flake8-docstrings',
+            'pypyr',
+            'pytest',
+            'pytest-cov',
+            'setuptools',
+            'twine',
+            'wheel'
+        ]
     },
 
     # If there are data files included in your packages that need to be
