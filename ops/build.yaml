@@ -101,11 +101,14 @@ publish:
         equals: '{expected_version}'
   - name: pypyr.steps.cmd
     comment: at this point, tox contains the pip compiled pypyr, rather than the -e dev install.
-              this will lead to surprises when re-using tox env because it won't ever update it again
-              against the working dir.
-    description: --> get rid of tox cache.
+             currently CI not smart enough to save changes to cache, but this could
+             well change, so prevent future problems.
+             When running locally failing to do this will lead to surprises of
+             not running local verification against the actual latest local. 
+             alternatively, can do rm -rf .tox
+    description: --> reset the tox cache.
     in:
-      cmd: rm -rf .tox
+      cmd: pip install -e .
 
 get_version:
   - name: pypyr.steps.default
